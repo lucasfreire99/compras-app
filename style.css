@@ -1,63 +1,109 @@
+/* =============================
+   RESET
+============================= */
+
+* {
+  box-sizing: border-box;
+}
+
 body {
   margin: 0;
-  font-family: Arial, sans-serif;
-  background: #1e1e1e;
-  color: #fff;
+  font-family: "Segoe UI", Roboto, Arial, sans-serif;
+  background: #f4f6f9;
+  color: #2c3e50;
 }
+
+/* =============================
+   LAYOUT
+============================= */
 
 .app {
   display: flex;
   height: 100vh;
 }
 
+/* =============================
+   SIDEBAR
+============================= */
+
 .sidebar {
-  width: 250px;
-  background: #2b2b2b;
-  padding: 20px;
-  box-sizing: border-box;
+  width: 260px;
+  background: #1f2937;
+  color: #fff;
+  padding: 24px 20px;
+  display: flex;
+  flex-direction: column;
 }
 
 .sidebar h2 {
-  margin-top: 0;
+  margin: 0 0 20px 0;
+  font-size: 18px;
+  font-weight: 600;
+  letter-spacing: 0.5px;
 }
 
 #listsContainer {
   list-style: none;
   padding: 0;
+  margin: 0;
+  flex: 1;
+  overflow-y: auto;
 }
+
+/* LISTA ITEM */
 
 .listItem {
   display: flex;
-  justify-content: space-between;
   align-items: center;
-  padding: 8px;
-  border-radius: 6px;
+  justify-content: space-between;
+  padding: 10px 12px;
+  border-radius: 8px;
+  margin-bottom: 6px;
   cursor: pointer;
+  transition: all 0.2s ease;
 }
 
 .listItem:hover {
-  background: #3a3a3a;
+  background: rgba(255, 255, 255, 0.08);
 }
 
 .activeList {
-  background: #444;
-  font-weight: bold;
+  background: #3b82f6;
+}
+
+.activeList .listCount {
+  background: rgba(255, 255, 255, 0.25);
+}
+
+.listName {
+  flex: 1;
+  font-size: 14px;
 }
 
 .listCount {
-  background: #555;
-  padding: 2px 8px;
-  border-radius: 12px;
-  font-size: 12px;
+  background: rgba(255, 255, 255, 0.15);
+  padding: 3px 8px;
+  border-radius: 20px;
+  font-size: 11px;
+  margin-right: 8px;
 }
 
 .listActions button {
   background: none;
   border: none;
-  color: white;
+  color: #ddd;
   cursor: pointer;
-  margin-left: 5px;
+  font-size: 13px;
+  margin-left: 4px;
+  transition: 0.2s;
 }
+
+.listActions button:hover {
+  color: #fff;
+  transform: scale(1.1);
+}
+
+/* NOVA LISTA */
 
 .newList {
   margin-top: 15px;
@@ -65,46 +111,189 @@ body {
 
 .newList input {
   width: 100%;
-  margin-bottom: 5px;
+  padding: 8px;
+  border-radius: 6px;
+  border: none;
+  margin-bottom: 6px;
 }
+
+.newList button {
+  width: 100%;
+  padding: 8px;
+  border-radius: 6px;
+  border: none;
+  background: #3b82f6;
+  color: white;
+  cursor: pointer;
+  transition: 0.2s;
+}
+
+.newList button:hover {
+  background: #2563eb;
+}
+
+/* =============================
+   MAIN
+============================= */
 
 .main {
   flex: 1;
-  padding: 20px;
-  overflow: auto;
+  padding: 32px;
+  overflow-y: auto;
 }
 
-form input, form select, form button {
-  margin: 5px;
+.main h1 {
+  margin-top: 0;
+  font-weight: 600;
+  font-size: 22px;
+  margin-bottom: 20px;
 }
+
+/* =============================
+   FORM
+============================= */
+
+form {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 20px;
+}
+
+form input,
+form select {
+  padding: 10px;
+  border-radius: 6px;
+  border: 1px solid #d1d5db;
+  background: #fff;
+  font-size: 14px;
+}
+
+form input:focus,
+form select:focus {
+  outline: none;
+  border-color: #3b82f6;
+}
+
+form button {
+  padding: 10px 16px;
+  border-radius: 6px;
+  border: none;
+  background: #10b981;
+  color: white;
+  cursor: pointer;
+  transition: 0.2s;
+}
+
+form button:hover {
+  background: #059669;
+}
+
+/* =============================
+   TABELA
+============================= */
 
 table {
   width: 100%;
-  margin-top: 20px;
   border-collapse: collapse;
+  background: #fff;
+  border-radius: 10px;
+  overflow: hidden;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+}
+
+thead {
+  background: #f1f5f9;
 }
 
 th, td {
-  border: 1px solid #444;
-  padding: 8px;
+  padding: 12px;
   text-align: center;
+  font-size: 14px;
 }
 
+th {
+  font-weight: 600;
+  color: #374151;
+}
+
+tbody tr {
+  border-top: 1px solid #eee;
+  transition: 0.2s;
+}
+
+tbody tr:hover {
+  background: #f9fafb;
+}
+
+/* BOTÕES AÇÃO */
+
+td button {
+  padding: 6px 10px;
+  border-radius: 6px;
+  border: none;
+  cursor: pointer;
+  font-size: 12px;
+  margin: 0 2px;
+  transition: 0.2s;
+}
+
+td button:first-child {
+  background: #f59e0b;
+  color: white;
+}
+
+td button:first-child:hover {
+  background: #d97706;
+}
+
+td button:last-child {
+  background: #ef4444;
+  color: white;
+}
+
+td button:last-child:hover {
+  background: #dc2626;
+}
+
+/* =============================
+   SUMMARY
+============================= */
+
 .summary {
-  margin-top: 15px;
+  margin-top: 20px;
+  padding: 16px;
+  background: #ffffff;
+  border-radius: 10px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.05);
   display: flex;
   justify-content: space-between;
+  font-size: 16px;
+  font-weight: 600;
 }
+
+/* =============================
+   TOAST
+============================= */
 
 .toast {
   position: fixed;
-  bottom: 20px;
-  right: 20px;
-  background: #333;
-  padding: 10px 20px;
-  border-radius: 6px;
+  bottom: 25px;
+  right: 25px;
+  background: #111827;
+  color: #fff;
+  padding: 12px 20px;
+  border-radius: 8px;
+  font-size: 14px;
+  box-shadow: 0 8px 20px rgba(0,0,0,0.2);
+  animation: fadeIn 0.3s ease;
 }
 
 .hidden {
   display: none;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
 }
