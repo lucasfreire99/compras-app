@@ -2,53 +2,53 @@
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8">
-  <title>Compras System</title>
+  <title>Compras ERP</title>
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
-<div class="layout">
+<div class="erp-layout">
 
-  <!-- SIDEBAR -->
-  <aside class="sidebar">
-    <div class="logo">
-      <h2>COMPRAS</h2>
-      <span>System</span>
+  <!-- TOPBAR -->
+  <header class="topbar">
+    <div class="topbar-left">
+      <span class="system-name">COMPRAS ERP</span>
     </div>
 
-    <div class="sidebar-section">
-      <h4>LISTAS</h4>
-      <div id="listsContainer"></div>
-      <button class="btn-primary" onclick="createNewList()">+ Nova Lista</button>
-    </div>
-  </aside>
-
-  <!-- MAIN -->
-  <div class="main">
-
-    <header class="header">
-      <h1 id="currentListTitle">Lista Atual</h1>
-
-      <div class="header-actions">
-        <div class="copy-dropdown">
-          <button class="btn-secondary" onclick="toggleCopyMenu()">Copiar</button>
-          <div id="copyMenu" class="copy-menu hidden">
-            <button onclick="copyCurrentList()">Bloco de Notas</button>
-            <button onclick="copyWhatsApp()">WhatsApp</button>
-          </div>
-        </div>
+    <div class="topbar-right">
+      <button class="btn-light" onclick="toggleCopyMenu()">Copiar</button>
+      <div id="copyMenu" class="dropdown hidden">
+        <button onclick="copyCurrentList()">Bloco de Notas</button>
+        <button onclick="copyWhatsApp()">WhatsApp</button>
       </div>
-    </header>
+    </div>
+  </header>
 
-    <section class="content">
+  <div class="body-container">
 
+    <!-- SIDEBAR -->
+    <aside class="sidebar">
+      <div class="menu-title">LISTAS</div>
+      <div id="listsContainer"></div>
+      <button class="btn-primary full" onclick="createNewList()">Nova Lista</button>
+    </aside>
+
+    <!-- MAIN CONTENT -->
+    <main class="main-content">
+
+      <div class="page-header">
+        <h2 id="currentListTitle">Lista Atual</h2>
+      </div>
+
+      <!-- FORM -->
       <div class="card form-card">
-        <input type="text" id="itemName" placeholder="Item">
+        <input type="text" id="itemName" placeholder="Descrição do Item">
         <input type="number" id="itemQty" placeholder="Qtd">
-        <input type="number" id="itemPrice" placeholder="Preço">
+        <input type="number" id="itemPrice" placeholder="Valor Unitário">
         <button class="btn-primary" onclick="addItem()">Adicionar</button>
       </div>
 
+      <!-- TABLE -->
       <div class="card">
         <table>
           <thead>
@@ -56,22 +56,23 @@
               <th>Status</th>
               <th>Item</th>
               <th>Qtd</th>
-              <th>Preço</th>
+              <th>Valor</th>
               <th>Total</th>
-              <th>Ações</th>
+              <th>Ação</th>
             </tr>
           </thead>
           <tbody id="itemsContainer"></tbody>
         </table>
       </div>
 
-      <div class="total-box">
+      <div class="footer-total">
         Total Geral: <strong id="totalValue">R$ 0,00</strong>
       </div>
 
-    </section>
+    </main>
 
   </div>
+
 </div>
 
 <script src="script.js"></script>
