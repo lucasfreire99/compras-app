@@ -1,6 +1,22 @@
+/* =========================
+   ESTADO GLOBAL
+========================= */
+
 let items = [];
-let categories = ["Alimentos", "Bebidas", "Limpeza", "Higiene", "Hortifruti", "Outros"];
 let deferredPrompt = null;
+
+const categories = [
+  "Alimentos",
+  "Bebidas",
+  "Limpeza",
+  "Higiene",
+  "Hortifruti",
+  "Outros"
+];
+
+/* =========================
+   ELEMENTOS DOM
+========================= */
 
 const form = document.getElementById("itemForm");
 const itemList = document.getElementById("itemList");
@@ -10,10 +26,29 @@ const categorySelect = document.getElementById("category");
 const filterCategory = document.getElementById("filterCategory");
 const installBtn = document.getElementById("installBtn");
 const toast = document.getElementById("toast");
+const copyBtn = document.getElementById("copyBtn");
+const offlineBadge = document.getElementById("offlineBadge");
+
+/* =========================
+   UTILITÁRIOS
+========================= */
 
 function formatCurrency(value) {
-  return value.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
+  return value.toLocaleString("pt-BR", {
+    style: "currency",
+    currency: "BRL"
+  });
 }
+
+function showToast(message) {
+  toast.textContent = message;
+  toast.classList.remove("hidden");
+  setTimeout(() => toast.classList.add("hidden"), 2000);
+}
+
+/* =========================
+   CATEGORIAS
+========================= */
 
 function initCategories() {
   categorySelect.innerHTML = "";
@@ -25,47 +60,80 @@ function initCategories() {
   });
 }
 
+/* =========================
+   STORAGE
+========================= */
+
+function saveToLocalStorage() {
+  localStorage.setItem("items", JSON.stringify(items));
+}
+
+function loadFromLocalStorage() {
+  items = JSON.parse(localStorage.getItem("items")) || [];
+}
+
+/* =========================
+   CÁLCULO TOTAL
+========================= */
+
 function calculateGrandTotal() {
   const total = items.reduce((sum, item) => sum + item.total, 0);
   grandTotalEl.textContent = formatCurrency(total);
   itemCountEl.textContent = items.length;
 }
 
+/* =========================
+   RENDERIZAÇÃO
+========================= */
+
 function renderItems() {
   itemList.innerHTML = "";
   const filter = filterCategory.value;
 
-  items
-    .filter(item => filter === "all" || item.category === filter)
-    .forEach((item, index) => {
-      itemList.innerHTML += `
-        <tr>
-          <td>${item.name}</td>
-          <td>${item.category}</td>
-          <td>${item.quantity}</td>
-          <td>${formatCurrency(item.price)}</td>
-          <td><strong>${formatCurrency(item.total)}</strong></td>
-          <td>${item.market || "-"}</td>
-          <td>
-            <button class="actionBtn" onclick="editItem(${index})">Editar</button>
-            <button class="actionBtn" onclick="deleteItem(${index})">Excluir</button>
-          </td>
-        </tr>
-      `;
-    });
+  const filteredItems = items.filter(
+    item => filter === "all" || item.category === filter
+  );
+
+  filteredItems.forEach((item, index) => {
+    itemList.innerHTML += `
+      <tr>
+        <td>${item.name}</td>
+        <td>${item.category}</td>
+        <td>${item.quantity}</td>
+        <td>${formatCurrency(item.price)}</td>
+        <td><strong>${formatCurrency(item.total)}</strong></td>
+        <td>${item.market || "-"}</td>
+        <td>
+          <button class="actionBtn" onclick="editItem(${index})">Editar</button>
+          <button class="actionBtn" onclick="deleteItem(${index})">Excluir</button>
+        </td>
+      </tr>
+    `;
+  });
 
   calculateGrandTotal();
   saveToLocalStorage();
 }
+
+/* =========================
+   CRUD
+========================= */
 
 function addItem(e) {
   e.preventDefault();
 
   const name = document.getElementById("name").value.trim();
   const quantity = parseFloat(document.getElementById("quantity").value);
-  const price = parseFloat(document.getElementById("price").value.replace(",", "."));
+  const price = parseFloat(
+    document.getElementById("price").value.replace(",", ".")
+  );
   const market = document.getElementById("market").value.trim();
   const category = categorySelect.value;
+
+  if (!name || !quantity || !price) {
+    showToast("Preencha todos os campos obrigatórios.");
+    return;
+  }
 
   const total = quantity * price;
 
@@ -95,32 +163,32 @@ function deleteItem(index) {
   }
 }
 
-function saveToLocalStorage() {
-  localStorage.setItem("items", JSON.stringify(items));
-}
-
-function loadFromLocalStorage() {
-  items = JSON.parse(localStorage.getItem("items")) || [];
-}
+/* =========================
+   COPIAR LISTA
+========================= */
 
 function copyList() {
+  if (items.length === 0) {
+    showToast("Lista vazia.");
+    return;
+  }
+
   let text = "🛒 Lista de Compras\n\n";
+
   items.forEach(item => {
     text += `${item.name} - ${item.quantity}x ${formatCurrency(item.price)} = ${formatCurrency(item.total)}\n`;
   });
+
   text += `\nTotal: ${grandTotalEl.textContent}`;
 
   navigator.clipboard.writeText(text);
   showToast("Lista copiada com sucesso!");
 }
 
-function showToast(message) {
-  toast.textContent = message;
-  toast.classList.remove("hidden");
-  setTimeout(() => toast.classList.add("hidden"), 2000);
-}
+/* =========================
+   PWA
+========================= */
 
-/* PWA */
 if ("serviceWorker" in navigator) {
   navigator.serviceWorker.register("service-worker.js");
 }
@@ -131,43 +199,37 @@ window.addEventListener("beforeinstallprompt", e => {
   installBtn.classList.remove("hidden");
 });
 
-installBtn.addEventListener("click", () => {
-  deferredPrompt.prompt();
-  installBtn.classList.add("hidden");
+installBtn?.addEventListener("click", () => {
+  if (deferredPrompt) {
+    deferredPrompt.prompt();
+    installBtn.classList.add("hidden");
+  }
 });
 
-/* ONLINE/OFFLINE */
+/* =========================
+   STATUS ONLINE/OFFLINE
+========================= */
+
 window.addEventListener("online", () =>
-  document.getElementById("offlineBadge").classList.add("hidden")
+  offlineBadge.classList.add("hidden")
 );
 
 window.addEventListener("offline", () =>
-  document.getElementById("offlineBadge").classList.remove("hidden")
+  offlineBadge.classList.remove("hidden")
 );
 
+/* =========================
+   EVENT LISTENERS
+========================= */
+
 filterCategory.addEventListener("change", renderItems);
-document.getElementById("copyBtn").addEventListener("click", copyList);
 form.addEventListener("submit", addItem);
+copyBtn?.addEventListener("click", copyList);
+
+/* =========================
+   INICIALIZAÇÃO
+========================= */
 
 loadFromLocalStorage();
 initCategories();
 renderItems();
-  categorias.forEach(cat => {
-    select.innerHTML += `<option value="${cat}">${cat}</option>`;
-    filtro.innerHTML += `<option value="${cat}">${cat}</option>`;
-  });
-}
-
-document.getElementById("addBtn").addEventListener("click", addItem);
-document.getElementById("copiarBtn").addEventListener("click", copyList);
-document.getElementById("filtroCategoria").addEventListener("change", render);
-
-window.addEventListener("online", () => document.getElementById("offlineBadge").classList.add("hidden"));
-window.addEventListener("offline", () => document.getElementById("offlineBadge").classList.remove("hidden"));
-
-if ("serviceWorker" in navigator) {
-  navigator.serviceWorker.register("service-worker.js");
-}
-
-loadCategorias();
-render();
