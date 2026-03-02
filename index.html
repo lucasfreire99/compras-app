@@ -1,58 +1,104 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <meta name="theme-color" content="#121212" />
-  <title>Lista de Compras</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Lista de Compras - Sistema</title>
 
-  <link rel="manifest" href="manifest.json" />
-  <link rel="stylesheet" href="style.css" />
+  <link rel="manifest" href="manifest.json">
+  <link rel="stylesheet" href="style.css">
+
+  <link rel="icon" type="image/png" href="icons/favicon.png">
+  <link rel="apple-touch-icon" href="icons/icon-192.png">
+
+  <meta name="theme-color" content="#0F1115">
 </head>
 <body>
 
-  <header>
-    <h1>🛒 Lista de Compras</h1>
-    <span id="offlineBadge" class="badge hidden">Offline</span>
-  </header>
+<div class="layout">
 
-  <main>
-    <div class="form-card">
-      <input type="text" id="supermercadoGlobal" placeholder="Supermercado (opcional)" />
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+    <h2>📊 Sistema</h2>
+    <nav>
+      <button class="menu active">Lista de Compras</button>
+    </nav>
+  </aside>
 
-      <input type="text" id="nome" placeholder="Nome do item" required />
-      <input type="number" id="quantidade" placeholder="Quantidade" min="1" required />
-      <input type="number" id="valor" placeholder="Valor unitário (R$)" step="0.01" required />
+  <!-- CONTEÚDO -->
+  <main class="content">
 
-      <div class="categoria-group">
-        <select id="categoria"></select>
-        <button id="novaCategoriaBtn" type="button">+</button>
+    <header class="topbar">
+      <h1>Lista de Compras</h1>
+      <span id="offlineBadge" class="offline hidden">Offline</span>
+    </header>
+
+    <!-- CARDS -->
+    <section class="stats">
+      <div class="statCard">
+        <span>Total de Itens</span>
+        <strong id="itemCount">0</strong>
       </div>
 
-      <button id="addBtn">Adicionar</button>
-    </div>
+      <div class="statCard">
+        <span>Total Geral</span>
+        <strong id="grandTotal">R$ 0,00</strong>
+      </div>
+    </section>
 
-    <div class="filter-group">
-      <select id="filtroCategoria">
-        <option value="todas">Todas Categorias</option>
+    <!-- FORM -->
+    <section class="formCard">
+      <form id="itemForm">
+
+        <div class="grid2">
+          <input type="text" id="name" placeholder="Nome do Item" required>
+          <select id="category" required></select>
+        </div>
+
+        <div class="grid3">
+          <input type="number" id="quantity" placeholder="Quantidade" min="1" required>
+          <input type="text" id="price" placeholder="Valor Unitário (R$)" required>
+          <input type="text" id="market" placeholder="Supermercado">
+        </div>
+
+        <button type="submit" class="btnPrimary">Adicionar Item</button>
+
+      </form>
+    </section>
+
+    <!-- FILTRO -->
+    <section class="filter">
+      <select id="filterCategory">
+        <option value="all">Filtrar por Categoria</option>
       </select>
+    </section>
 
-      <button id="copiarBtn">Copiar Lista</button>
-    </div>
+    <!-- TABELA -->
+    <section class="tableCard">
+      <table>
+        <thead>
+          <tr>
+            <th>Item</th>
+            <th>Categoria</th>
+            <th>Qtd</th>
+            <th>Valor</th>
+            <th>Total</th>
+            <th>Mercado</th>
+            <th>Ações</th>
+          </tr>
+        </thead>
+        <tbody id="itemList"></tbody>
+      </table>
+    </section>
 
-    <div id="contador"></div>
-    <div id="lista"></div>
   </main>
+</div>
 
-  <div class="total-bar">
-    Total: <span id="totalGeral">R$ 0,00</span>
-  </div>
+<button id="copyBtn" class="floatingBtn">Copiar Lista</button>
+<button id="installBtn" class="installBtn hidden">Instalar App</button>
 
-  <button id="fab" class="fab">+</button>
-  <button id="installBtn" class="install-btn hidden">Instalar App</button>
+<div id="toast" class="toast hidden"></div>
 
-  <div id="toast" class="toast hidden"></div>
-
-  <script src="script.js"></script>
+<script src="script.js"></script>
 </body>
 </html>
