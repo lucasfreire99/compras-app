@@ -1,69 +1,58 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Compras App</title>
-  <link rel="stylesheet" href="style.css" />
+
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#1e293b">
+
+  <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
-<div class="app">
+<div class="app-container">
 
-  <!-- SIDEBAR -->
-  <aside class="sidebar">
+  <aside class="sidebar" id="sidebar">
     <h2>Minhas Listas</h2>
-
-    <ul id="listsContainer"></ul>
-
-    <div class="newList">
-      <input type="text" id="newListName" placeholder="Nova lista" />
-      <button id="createListBtn">Criar</button>
-    </div>
+    <div id="listsContainer"></div>
+    <button onclick="createNewList()" class="primary-btn">+ Nova Lista</button>
   </aside>
 
-  <!-- CONTEÚDO -->
-  <main class="main">
+  <main class="app-content">
 
-    <h1 id="currentListTitle"></h1>
+    <header class="app-header">
+      <button onclick="toggleSidebar()" class="menu-btn">☰</button>
+      <h1 id="currentListTitle"></h1>
 
-    <form id="itemForm">
-      <input type="text" id="name" placeholder="Item" required />
-      <input type="number" id="quantity" placeholder="Qtd" required />
-      <input type="number" step="0.01" id="price" placeholder="Preço" required />
-      <input type="text" id="market" placeholder="Mercado" />
+      <div class="copy-dropdown">
+        <button onclick="toggleCopyMenu()" class="primary-btn">Copiar ▼</button>
+        <div id="copyMenu" class="copy-menu hidden">
+          <button onclick="copyTxt()">Bloco de Notas</button>
+          <button onclick="copyWhatsApp()">WhatsApp</button>
+        </div>
+      </div>
+    </header>
 
-      <select id="category"></select>
+    <section class="content-body">
 
-      <button type="submit">Adicionar</button>
-    </form>
+      <div class="form">
+        <input type="text" id="itemName" placeholder="Item">
+        <input type="number" id="itemQty" placeholder="Qtd">
+        <input type="number" id="itemPrice" placeholder="Preço">
+        <button onclick="addItem()" class="primary-btn">Adicionar</button>
+      </div>
 
-    <select id="filterCategory"></select>
+      <div id="itemsContainer"></div>
 
-    <table>
-      <thead>
-        <tr>
-          <th>Item</th>
-          <th>Categoria</th>
-          <th>Qtd</th>
-          <th>Preço</th>
-          <th>Total</th>
-          <th>Mercado</th>
-          <th>Ações</th>
-        </tr>
-      </thead>
-      <tbody id="itemList"></tbody>
-    </table>
+      <div class="total-box">
+        Total Geral: <span id="totalValue">R$ 0,00</span>
+      </div>
 
-    <div class="summary">
-      <span>Total: <strong id="grandTotal">R$ 0,00</strong></span>
-      <span>Itens: <strong id="itemCount">0</strong></span>
-    </div>
-
+    </section>
   </main>
 </div>
-
-<div id="toast" class="toast hidden"></div>
 
 <script src="script.js"></script>
 </body>
