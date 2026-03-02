@@ -1,299 +1,136 @@
-/* =============================
-   RESET
-============================= */
-
 * {
+  margin: 0;
+  padding: 0;
   box-sizing: border-box;
+  font-family: sans-serif;
 }
 
 body {
-  margin: 0;
-  font-family: "Segoe UI", Roboto, Arial, sans-serif;
-  background: #f4f6f9;
-  color: #2c3e50;
-}
-
-/* =============================
-   LAYOUT
-============================= */
-
-.app {
+  background: #0f172a;
   display: flex;
+  justify-content: center;
+  align-items: center;
   height: 100vh;
 }
 
-/* =============================
-   SIDEBAR
-============================= */
+.app-container {
+  width: 420px;
+  height: 90vh;
+  background: #111827;
+  border-radius: 25px;
+  overflow: hidden;
+  display: flex;
+  box-shadow: 0 25px 50px rgba(0,0,0,0.6);
+  position: relative;
+}
 
 .sidebar {
-  width: 260px;
+  width: 250px;
   background: #1f2937;
-  color: #fff;
-  padding: 24px 20px;
+  padding: 20px;
+  position: absolute;
+  left: -250px;
+  height: 100%;
+  transition: 0.3s;
+}
+
+.sidebar.active {
+  left: 0;
+}
+
+.sidebar h2 {
+  color: white;
+  margin-bottom: 15px;
+}
+
+.app-content {
+  flex: 1;
   display: flex;
   flex-direction: column;
 }
 
-.sidebar h2 {
-  margin: 0 0 20px 0;
-  font-size: 18px;
-  font-weight: 600;
-  letter-spacing: 0.5px;
-}
-
-#listsContainer {
-  list-style: none;
-  padding: 0;
-  margin: 0;
-  flex: 1;
-  overflow-y: auto;
-}
-
-/* LISTA ITEM */
-
-.listItem {
+.app-header {
+  background: #1e293b;
+  padding: 15px;
   display: flex;
-  align-items: center;
   justify-content: space-between;
-  padding: 10px 12px;
-  border-radius: 8px;
-  margin-bottom: 6px;
-  cursor: pointer;
-  transition: all 0.2s ease;
+  align-items: center;
+  color: white;
 }
 
-.listItem:hover {
-  background: rgba(255, 255, 255, 0.08);
-}
-
-.activeList {
-  background: #3b82f6;
-}
-
-.activeList .listCount {
-  background: rgba(255, 255, 255, 0.25);
-}
-
-.listName {
-  flex: 1;
-  font-size: 14px;
-}
-
-.listCount {
-  background: rgba(255, 255, 255, 0.15);
-  padding: 3px 8px;
-  border-radius: 20px;
-  font-size: 11px;
-  margin-right: 8px;
-}
-
-.listActions button {
+.menu-btn {
   background: none;
   border: none;
-  color: #ddd;
-  cursor: pointer;
-  font-size: 13px;
-  margin-left: 4px;
-  transition: 0.2s;
-}
-
-.listActions button:hover {
-  color: #fff;
-  transform: scale(1.1);
-}
-
-/* NOVA LISTA */
-
-.newList {
-  margin-top: 15px;
-}
-
-.newList input {
-  width: 100%;
-  padding: 8px;
-  border-radius: 6px;
-  border: none;
-  margin-bottom: 6px;
-}
-
-.newList button {
-  width: 100%;
-  padding: 8px;
-  border-radius: 6px;
-  border: none;
-  background: #3b82f6;
+  font-size: 20px;
   color: white;
-  cursor: pointer;
-  transition: 0.2s;
 }
 
-.newList button:hover {
-  background: #2563eb;
-}
-
-/* =============================
-   MAIN
-============================= */
-
-.main {
-  flex: 1;
-  padding: 32px;
+.content-body {
+  padding: 20px;
   overflow-y: auto;
+  flex: 1;
 }
 
-.main h1 {
-  margin-top: 0;
-  font-weight: 600;
-  font-size: 22px;
-  margin-bottom: 20px;
-}
-
-/* =============================
-   FORM
-============================= */
-
-form {
+.form {
   display: flex;
-  flex-wrap: wrap;
-  gap: 10px;
-  margin-bottom: 20px;
+  gap: 5px;
+  margin-bottom: 15px;
 }
 
-form input,
-form select {
-  padding: 10px;
-  border-radius: 6px;
-  border: 1px solid #d1d5db;
-  background: #fff;
-  font-size: 14px;
-}
-
-form input:focus,
-form select:focus {
-  outline: none;
-  border-color: #3b82f6;
-}
-
-form button {
-  padding: 10px 16px;
-  border-radius: 6px;
+.form input {
+  padding: 8px;
+  border-radius: 8px;
   border: none;
-  background: #10b981;
+  flex: 1;
+}
+
+.primary-btn {
+  background: #2563eb;
+  border: none;
   color: white;
-  cursor: pointer;
-  transition: 0.2s;
+  padding: 8px 12px;
+  border-radius: 8px;
 }
 
-form button:hover {
-  background: #059669;
-}
-
-/* =============================
-   TABELA
-============================= */
-
-table {
-  width: 100%;
-  border-collapse: collapse;
-  background: #fff;
-  border-radius: 10px;
-  overflow: hidden;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.05);
-}
-
-thead {
-  background: #f1f5f9;
-}
-
-th, td {
+.item-card {
+  background: #1f2937;
   padding: 12px;
-  text-align: center;
-  font-size: 14px;
-}
-
-th {
-  font-weight: 600;
-  color: #374151;
-}
-
-tbody tr {
-  border-top: 1px solid #eee;
-  transition: 0.2s;
-}
-
-tbody tr:hover {
-  background: #f9fafb;
-}
-
-/* BOTÕES AÇÃO */
-
-td button {
-  padding: 6px 10px;
-  border-radius: 6px;
-  border: none;
-  cursor: pointer;
-  font-size: 12px;
-  margin: 0 2px;
-  transition: 0.2s;
-}
-
-td button:first-child {
-  background: #f59e0b;
-  color: white;
-}
-
-td button:first-child:hover {
-  background: #d97706;
-}
-
-td button:last-child {
-  background: #ef4444;
-  color: white;
-}
-
-td button:last-child:hover {
-  background: #dc2626;
-}
-
-/* =============================
-   SUMMARY
-============================= */
-
-.summary {
-  margin-top: 20px;
-  padding: 16px;
-  background: #ffffff;
-  border-radius: 10px;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+  border-radius: 12px;
+  margin-bottom: 10px;
   display: flex;
   justify-content: space-between;
-  font-size: 16px;
-  font-weight: 600;
 }
 
-/* =============================
-   TOAST
-============================= */
+.item-card.purchased {
+  opacity: 0.6;
+  text-decoration: line-through;
+}
 
-.toast {
-  position: fixed;
-  bottom: 25px;
-  right: 25px;
-  background: #111827;
-  color: #fff;
-  padding: 12px 20px;
-  border-radius: 8px;
-  font-size: 14px;
-  box-shadow: 0 8px 20px rgba(0,0,0,0.2);
-  animation: fadeIn 0.3s ease;
+.total-box {
+  margin-top: 15px;
+  font-weight: bold;
+  color: #22c55e;
+}
+
+.copy-menu {
+  position: absolute;
+  background: #1f2937;
+  right: 10px;
+  top: 60px;
+  border-radius: 10px;
+  padding: 5px;
+  display: flex;
+  flex-direction: column;
+}
+
+.copy-menu button {
+  background: none;
+  border: none;
+  color: white;
+  padding: 8px;
+  text-align: left;
 }
 
 .hidden {
   display: none;
-}
-
-@keyframes fadeIn {
-  from { opacity: 0; transform: translateY(10px); }
-  to { opacity: 1; transform: translateY(0); }
 }
