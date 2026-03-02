@@ -1,10 +1,10 @@
 {
-  "name": "Lista de Compras",
+  "name": "Compras App",
   "short_name": "Compras",
   "start_url": ".",
   "display": "standalone",
-  "background_color": "#0F1115",
-  "theme_color": "#0F1115",
+  "background_color": "#111827",
+  "theme_color": "#1e293b",
   "orientation": "portrait",
   "icons": [
     {
