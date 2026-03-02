@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#121212" />
+  <title>Lista de Compras</title>
+
+  <link rel="manifest" href="manifest.json" />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+  <header>
+    <h1>🛒 Lista de Compras</h1>
+    <span id="offlineBadge" class="badge hidden">Offline</span>
+  </header>
+
+  <main>
+    <div class="form-card">
+      <input type="text" id="supermercadoGlobal" placeholder="Supermercado (opcional)" />
+
+      <input type="text" id="nome" placeholder="Nome do item" required />
+      <input type="number" id="quantidade" placeholder="Quantidade" min="1" required />
+      <input type="number" id="valor" placeholder="Valor unitário (R$)" step="0.01" required />
+
+      <div class="categoria-group">
+        <select id="categoria"></select>
+        <button id="novaCategoriaBtn" type="button">+</button>
+      </div>
+
+      <button id="addBtn">Adicionar</button>
+    </div>
+
+    <div class="filter-group">
+      <select id="filtroCategoria">
+        <option value="todas">Todas Categorias</option>
+      </select>
+
+      <button id="copiarBtn">Copiar Lista</button>
+    </div>
+
+    <div id="contador"></div>
+    <div id="lista"></div>
+  </main>
+
+  <div class="total-bar">
+    Total: <span id="totalGeral">R$ 0,00</span>
+  </div>
+
+  <button id="fab" class="fab">+</button>
+  <button id="installBtn" class="install-btn hidden">Instalar App</button>
+
+  <div id="toast" class="toast hidden"></div>
+
+  <script src="script.js"></script>
+</body>
+</html>
