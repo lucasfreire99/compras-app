@@ -1,101 +1,67 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Lista de Compras - Sistema</title>
-
-  <link rel="manifest" href="manifest.json">
-  <link rel="stylesheet" href="style.css">
-
-  <link rel="icon" type="image/png" href="icons/favicon.png">
-  <link rel="apple-touch-icon" href="icons/icon-192.png">
-
-  <meta name="theme-color" content="#0F1115">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Compras App</title>
+  <link rel="stylesheet" href="style.css" />
 </head>
 <body>
 
-<div class="layout">
+<div class="app">
 
   <!-- SIDEBAR -->
   <aside class="sidebar">
-    <h2>📊 Sistema</h2>
-    <nav>
-      <button class="menu active">Lista de Compras</button>
-    </nav>
+    <h2>Minhas Listas</h2>
+
+    <ul id="listsContainer"></ul>
+
+    <div class="newList">
+      <input type="text" id="newListName" placeholder="Nova lista" />
+      <button id="createListBtn">Criar</button>
+    </div>
   </aside>
 
   <!-- CONTEÚDO -->
-  <main class="content">
+  <main class="main">
 
-    <header class="topbar">
-      <h1>Lista de Compras</h1>
-      <span id="offlineBadge" class="offline hidden">Offline</span>
-    </header>
+    <h1 id="currentListTitle"></h1>
 
-    <!-- CARDS -->
-    <section class="stats">
-      <div class="statCard">
-        <span>Total de Itens</span>
-        <strong id="itemCount">0</strong>
-      </div>
+    <form id="itemForm">
+      <input type="text" id="name" placeholder="Item" required />
+      <input type="number" id="quantity" placeholder="Qtd" required />
+      <input type="number" step="0.01" id="price" placeholder="Preço" required />
+      <input type="text" id="market" placeholder="Mercado" />
 
-      <div class="statCard">
-        <span>Total Geral</span>
-        <strong id="grandTotal">R$ 0,00</strong>
-      </div>
-    </section>
+      <select id="category"></select>
 
-    <!-- FORM -->
-    <section class="formCard">
-      <form id="itemForm">
+      <button type="submit">Adicionar</button>
+    </form>
 
-        <div class="grid2">
-          <input type="text" id="name" placeholder="Nome do Item" required>
-          <select id="category" required></select>
-        </div>
+    <select id="filterCategory"></select>
 
-        <div class="grid3">
-          <input type="number" id="quantity" placeholder="Quantidade" min="1" required>
-          <input type="text" id="price" placeholder="Valor Unitário (R$)" required>
-          <input type="text" id="market" placeholder="Supermercado">
-        </div>
+    <table>
+      <thead>
+        <tr>
+          <th>Item</th>
+          <th>Categoria</th>
+          <th>Qtd</th>
+          <th>Preço</th>
+          <th>Total</th>
+          <th>Mercado</th>
+          <th>Ações</th>
+        </tr>
+      </thead>
+      <tbody id="itemList"></tbody>
+    </table>
 
-        <button type="submit" class="btnPrimary">Adicionar Item</button>
-
-      </form>
-    </section>
-
-    <!-- FILTRO -->
-    <section class="filter">
-      <select id="filterCategory">
-        <option value="all">Filtrar por Categoria</option>
-      </select>
-    </section>
-
-    <!-- TABELA -->
-    <section class="tableCard">
-      <table>
-        <thead>
-          <tr>
-            <th>Item</th>
-            <th>Categoria</th>
-            <th>Qtd</th>
-            <th>Valor</th>
-            <th>Total</th>
-            <th>Mercado</th>
-            <th>Ações</th>
-          </tr>
-        </thead>
-        <tbody id="itemList"></tbody>
-      </table>
-    </section>
+    <div class="summary">
+      <span>Total: <strong id="grandTotal">R$ 0,00</strong></span>
+      <span>Itens: <strong id="itemCount">0</strong></span>
+    </div>
 
   </main>
 </div>
-
-<button id="copyBtn" class="floatingBtn">Copiar Lista</button>
-<button id="installBtn" class="installBtn hidden">Instalar App</button>
 
 <div id="toast" class="toast hidden"></div>
 
