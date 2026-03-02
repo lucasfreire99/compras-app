@@ -4,7 +4,7 @@ let lists = JSON.parse(localStorage.getItem("lists")) || {
 
 let currentList = Object.keys(lists)[0];
 
-function saveLists() {
+function save() {
   localStorage.setItem("lists", JSON.stringify(lists));
 }
 
@@ -13,11 +13,9 @@ function renderLists() {
   container.innerHTML = "";
 
   Object.keys(lists).forEach(name => {
-    const count = lists[name].length;
     const btn = document.createElement("button");
-    btn.className = "btn-secondary";
-    btn.style.marginBottom = "5px";
-    btn.innerText = `${name} (${count})`;
+    btn.className = "btn-light full";
+    btn.innerText = `${name} (${lists[name].length})`;
     btn.onclick = () => {
       currentList = name;
       renderItems();
@@ -28,10 +26,9 @@ function renderLists() {
 }
 
 function addItem() {
-  const name = document.getElementById("itemName").value;
-  const qty = Number(document.getElementById("itemQty").value);
-  const price = Number(document.getElementById("itemPrice").value);
-
+  const name = itemName.value;
+  const qty = Number(itemQty.value);
+  const price = Number(itemPrice.value);
   if (!name || !qty || !price) return;
 
   lists[currentList].push({
@@ -42,24 +39,22 @@ function addItem() {
     purchased: false
   });
 
-  saveLists();
+  save();
   renderItems();
 }
 
 function renderItems() {
-  const container = document.getElementById("itemsContainer");
-  container.innerHTML = "";
+  const tbody = document.getElementById("itemsContainer");
+  tbody.innerHTML = "";
+  let total = 0;
 
-  let totalGeral = 0;
-
-  lists[currentList].forEach((item, index) => {
-    totalGeral += item.total;
+  lists[currentList].forEach((item, i) => {
+    total += item.total;
 
     const row = document.createElement("tr");
-
     row.innerHTML = `
       <td>
-        <button onclick="togglePurchased(${index})">
+        <button onclick="toggle(${i})">
           ${item.purchased ? "✔" : "○"}
         </button>
       </td>
@@ -68,7 +63,7 @@ function renderItems() {
       <td>R$ ${item.price.toFixed(2)}</td>
       <td>R$ ${item.total.toFixed(2)}</td>
       <td>
-        <button class="btn-danger" onclick="removeItem(${index})">Excluir</button>
+        <button onclick="removeItem(${i})">Excluir</button>
       </td>
     `;
 
@@ -77,25 +72,22 @@ function renderItems() {
       row.style.opacity = "0.6";
     }
 
-    container.appendChild(row);
+    tbody.appendChild(row);
   });
 
-  document.getElementById("totalValue").innerText =
-    "R$ " + totalGeral.toFixed(2);
-
+  totalValue.innerText = "R$ " + total.toFixed(2);
   renderLists();
 }
 
-function togglePurchased(index) {
-  lists[currentList][index].purchased =
-    !lists[currentList][index].purchased;
-  saveLists();
+function toggle(i) {
+  lists[currentList][i].purchased = !lists[currentList][i].purchased;
+  save();
   renderItems();
 }
 
-function removeItem(index) {
-  lists[currentList].splice(index, 1);
-  saveLists();
+function removeItem(i) {
+  lists[currentList].splice(i, 1);
+  save();
   renderItems();
 }
 
@@ -104,9 +96,13 @@ function createNewList() {
   if (!name) return;
   lists[name] = [];
   currentList = name;
-  saveLists();
+  save();
   renderLists();
   renderItems();
+}
+
+function toggleCopyMenu() {
+  document.getElementById("copyMenu").classList.toggle("hidden");
 }
 
 renderLists();
