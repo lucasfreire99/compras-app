@@ -1,80 +1,124 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-  <meta charset="UTF-8">
-  <title>Compras ERP</title>
-  <link rel="stylesheet" href="style.css">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lista de Compras</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#121212">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 </head>
 <body>
+    <div class="app-container">
+        <!-- Header -->
+        <header class="header">
+            <h1>Lista de Compras</h1>
+            <div class="header-badge">
+                <span id="item-counter">0 itens</span>
+                <span id="online-status" class="online-status online">Online</span>
+            </div>
+        </header>
 
-<div class="erp-layout">
+        <!-- Botão Instalar App -->
+        <button id="install-button" class="install-button hidden">
+            📲 Instalar App
+        </button>
 
-  <!-- TOPBAR -->
-  <header class="topbar">
-    <div class="topbar-left">
-      <span class="system-name">COMPRAS ERP</span>
+        <!-- Supermercado Atual -->
+        <section class="supermarket-section">
+            <label for="supermarket-select">Supermercado Atual:</label>
+            <select id="supermarket-select" class="supermarket-select">
+                <option value="">Selecione um supermercado</option>
+                <option value="Extra">Extra</option>
+                <option value="Carrefour">Carrefour</option>
+                <option value="Pão de Açúcar">Pão de Açúcar</option>
+                <option value="Assaí">Assaí</option>
+                <option value="Atacadão">Atacadão</option>
+                <option value="Outro">Outro</option>
+            </select>
+        </section>
+
+        <!-- Formulário de Adicionar Item -->
+        <section class="add-item-section">
+            <h2>Adicionar Item</h2>
+            <form id="item-form" class="item-form">
+                <div class="form-group">
+                    <input type="text" id="item-name" placeholder="Nome do item" required>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <input type="number" id="item-quantity" placeholder="Quantidade" min="0.01" step="0.01" required>
+                    </div>
+                    <div class="form-group">
+                        <input type="number" id="item-price" placeholder="Preço unitário (R$)" min="0.01" step="0.01" required>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <select id="item-category" required>
+                            <option value="">Categoria</option>
+                            <option value="Alimentos">Alimentos</option>
+                            <option value="Bebidas">Bebidas</option>
+                            <option value="Limpeza">Limpeza</option>
+                            <option value="Higiene">Higiene</option>
+                            <option value="Hortifruti">Hortifruti</option>
+                            <option value="Outros">Outros</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <input type="text" id="item-supermarket" placeholder="Supermercado (opcional)">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <input type="text" id="new-category" placeholder="Nova categoria (opcional)">
+                </div>
+                <div class="form-actions">
+                    <button type="submit" class="btn-primary">➕ Adicionar</button>
+                    <button type="button" id="clear-form" class="btn-secondary">Limpar</button>
+                </div>
+            </form>
+        </section>
+
+        <!-- Filtros e Ordenação -->
+        <section class="filters-section">
+            <div class="filter-group">
+                <label for="filter-category">Filtrar por categoria:</label>
+                <select id="filter-category" class="filter-select">
+                    <option value="">Todas as categorias</option>
+                </select>
+            </div>
+            <div class="filter-group">
+                <label for="sort-by">Ordenar por:</label>
+                <select id="sort-by" class="filter-select">
+                    <option value="categoria">Categoria</option>
+                    <option value="nome">Nome</option>
+                    <option value="total">Total (maior)</option>
+                </select>
+            </div>
+        </section>
+
+        <!-- Lista de Itens -->
+        <section class="items-list" id="items-list">
+            <!-- Itens serão renderizados aqui -->
+        </section>
+
+        <!-- Total Geral Fixo -->
+        <div class="total-bar" id="total-bar">
+            <span>Total Geral:</span>
+            <span id="grand-total">R$ 0,00</span>
+        </div>
+
+        <!-- Botão Flutuante para Copiar -->
+        <button class="floating-btn" id="copy-list-btn" title="Copiar lista">
+            📋
+        </button>
     </div>
 
-    <div class="topbar-right">
-      <button class="btn-light" onclick="toggleCopyMenu()">Copiar</button>
-      <div id="copyMenu" class="dropdown hidden">
-        <button onclick="copyCurrentList()">Bloco de Notas</button>
-        <button onclick="copyWhatsApp()">WhatsApp</button>
-      </div>
-    </div>
-  </header>
+    <!-- Toast Notification -->
+    <div id="toast" class="toast hidden"></div>
 
-  <div class="body-container">
-
-    <!-- SIDEBAR -->
-    <aside class="sidebar">
-      <div class="menu-title">LISTAS</div>
-      <div id="listsContainer"></div>
-      <button class="btn-primary full" onclick="createNewList()">Nova Lista</button>
-    </aside>
-
-    <!-- MAIN CONTENT -->
-    <main class="main-content">
-
-      <div class="page-header">
-        <h2 id="currentListTitle">Lista Atual</h2>
-      </div>
-
-      <!-- FORM -->
-      <div class="card form-card">
-        <input type="text" id="itemName" placeholder="Descrição do Item">
-        <input type="number" id="itemQty" placeholder="Qtd">
-        <input type="number" id="itemPrice" placeholder="Valor Unitário">
-        <button class="btn-primary" onclick="addItem()">Adicionar</button>
-      </div>
-
-      <!-- TABLE -->
-      <div class="card">
-        <table>
-          <thead>
-            <tr>
-              <th>Status</th>
-              <th>Item</th>
-              <th>Qtd</th>
-              <th>Valor</th>
-              <th>Total</th>
-              <th>Ação</th>
-            </tr>
-          </thead>
-          <tbody id="itemsContainer"></tbody>
-        </table>
-      </div>
-
-      <div class="footer-total">
-        Total Geral: <strong id="totalValue">R$ 0,00</strong>
-      </div>
-
-    </main>
-
-  </div>
-
-</div>
-
-<script src="script.js"></script>
+    <script src="script.js"></script>
 </body>
 </html>
