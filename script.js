@@ -64,6 +64,10 @@ function setupEventListeners() {
         exportarListaCSV();
     });
     
+    // Botões de alteração em lote
+    // Nota: Esses botões são adicionados dinamicamente no HTML
+    // Os event listeners são configurados quando os botões são clicados
+    
     // Input file
     document.getElementById('fileInput').addEventListener('change', function(e) {
         const file = e.target.files[0];
@@ -202,6 +206,36 @@ function renderItems() {
     const totalGeral = calculateGrandTotal();
     const totalFormatado = totalGeral > 0 ? `R$ ${formatarMoeda(totalGeral)}` : 'R$ 0,00';
     document.getElementById('grandTotal').textContent = totalFormatado;
+    
+    // Atualizar badge de itens pendentes
+    atualizarBadgePendentes();
+}
+
+function atualizarBadgePendentes() {
+    const itensPendentes = items.filter(item => !item.valor || item.valor === 0).length;
+    const badge = document.getElementById('pendingBadge');
+    const banner = document.getElementById('priceUpdateBanner');
+    
+    if (itensPendentes > 0) {
+        if (badge) {
+            badge.style.display = 'flex';
+            const countSpan = badge.querySelector('.pending-count') || criarElemento('span', 'pending-count');
+            countSpan.textContent = itensPendentes;
+            badge.innerHTML = `<span class="pending-count">${itensPendentes}</span> ITENS SEM PREÇO`;
+        }
+        if (banner) {
+            banner.style.display = 'flex';
+        }
+    } else {
+        if (badge) badge.style.display = 'none';
+        if (banner) banner.style.display = 'none';
+    }
+}
+
+function criarElemento(tag, className) {
+    const elemento = document.createElement(tag);
+    elemento.className = className;
+    return elemento;
 }
 
 function renderCategorias() {
@@ -378,7 +412,7 @@ function gerarTextoNotepad(filter) {
 // ========== FUNÇÕES DE IMPORTAÇÃO/EXPORTAÇÃO ==========
 
 /**
- * Download do modelo CSV para importação (FORMATO MÍNIMO: NOME,QUANTIDADE,CATEGORIA)
+ * Download do modelo CSV para importação
  */
 function downloadModelo() {
     // Cabeçalho do CSV - Formato mínimo (3 colunas)
@@ -430,25 +464,23 @@ function downloadModelo() {
         ['FRALDA', '1', 'HIGIENE E MUNDO BABY']
     ];
     
-    // Montar CSV
-    const csvContent = [
-        headers.join(','),
-        ...exemplos.map(row => row.join(','))
-    ].join('\n');
+    // Montar CSV - SEM BOM para melhor compatibilidade
+    let csvContent = headers.join(',') + '\n';
+    csvContent += exemplos.map(row => row.join(',')).join('\n');
     
     // Criar e baixar arquivo
-    const blob = new Blob(['\uFEFF' + csvContent], { type: 'text/csv;charset=utf-8;' }); // BOM para UTF-8
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = 'modelo_lista_compras_formato_minimo.csv';
+    a.download = 'modelo_lista_compras.csv';
     a.style.display = 'none';
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
     
-    showToast('📥 MODELO BAIXADO COM SUCESSO! (Formato: NOME,QUANTIDADE,CATEGORIA)');
+    showToast('📥 MODELO BAIXADO COM SUCESSO!');
 }
 
 /**
@@ -459,7 +491,32 @@ function importarCSV() {
 }
 
 /**
- * Processar arquivo CSV importado (ACEITANDO ARQUIVOS SEM PREÇO)
+ * Função auxiliar para parsear linha CSV corretamente (considerando aspas)
+ */
+function parseCSVLine(line) {
+    const result = [];
+    let current = '';
+    let inQuotes = false;
+    
+    for (let i = 0; i < line.length; i++) {
+        const char = line[i];
+        
+        if (char === '"') {
+            inQuotes = !inQuotes;
+        } else if (char === ',' && !inQuotes) {
+            result.push(current);
+            current = '';
+        } else {
+            current += char;
+        }
+    }
+    
+    result.push(current); // Adicionar o último campo
+    return result.map(campo => campo.trim());
+}
+
+/**
+ * Processar arquivo CSV importado (CORRIGIDO)
  */
 function processarImportacao(file) {
     const reader = new FileReader();
@@ -467,100 +524,136 @@ function processarImportacao(file) {
     reader.onload = function(e) {
         try {
             const conteudo = e.target.result;
-            const linhas = conteudo.split('\n');
             
-            // Identificar cabeçalho e formato
-            const cabecalho = linhas[0].toUpperCase();
-            let formato;
+            // Remover BOM (Byte Order Mark) se presente
+            const conteudoLimpo = conteudo.replace(/^\uFEFF/, '');
             
-            if (cabecalho.includes('VALOR') || cabecalho.includes('PREÇO') || cabecalho.includes('PRECO')) {
-                formato = 'completo';
-            } else if (cabecalho.includes('SUPERMERCADO')) {
-                formato = 'sem_preco';
-            } else {
-                formato = 'minimo';
+            // Dividir por linhas e remover linhas vazias
+            const linhas = conteudoLimpo.split(/\r?\n/).filter(linha => linha.trim() !== '');
+            
+            if (linhas.length === 0) {
+                showToast('❌ ARQUIVO VAZIO!');
+                return;
             }
             
-            // Remover cabeçalho e linhas vazias
-            const dados = linhas.slice(1).filter(linha => linha.trim() !== '');
+            // Extrair cabeçalho e converter para maiúsculo para comparação
+            const cabecalho = linhas[0].toUpperCase().split(',').map(col => col.trim());
+            
+            console.log('Cabeçalho detectado:', cabecalho);
+            
+            // Identificar formato baseado no cabeçalho
+            let formato = 'minimo'; // padrão: NOME,QUANTIDADE,CATEGORIA
+            
+            if (cabecalho.includes('VALOR') && cabecalho.includes('SUPERMERCADO')) {
+                formato = 'completo'; // NOME,QUANTIDADE,VALOR,SUPERMERCADO,CATEGORIA
+            } else if (cabecalho.includes('SUPERMERCADO')) {
+                formato = 'sem_preco'; // NOME,QUANTIDADE,SUPERMERCADO,CATEGORIA
+            } else if (cabecalho.includes('CATEGORIA')) {
+                formato = 'minimo'; // NOME,QUANTIDADE,CATEGORIA
+            }
+            
+            console.log('Formato detectado:', formato);
+            
+            // Processar dados (pular cabeçalho)
+            const dados = linhas.slice(1);
             
             let importados = 0;
             let erros = 0;
             let itensSemPreco = 0;
+            let novasCategorias = 0;
             
             dados.forEach((linha, index) => {
                 try {
-                    // Parse CSV (simples, considerando vírgula como separador)
-                    const colunas = linha.split(',').map(col => col.trim().replace(/^"|"$/g, ''));
+                    // Parse CSV considerando possíveis aspas e vírgulas dentro do texto
+                    const colunas = parseCSVLine(linha);
+                    
+                    if (colunas.length < 3) {
+                        console.warn(`Linha ${index + 2} ignorada: poucas colunas (${colunas.length})`);
+                        erros++;
+                        return;
+                    }
                     
                     let nome, quantidade, valor, supermercado, categoria;
                     
-                    // Detectar formato baseado no número de colunas
-                    if (colunas.length >= 5) {
+                    // Extrair campos baseado no formato detectado
+                    if (formato === 'completo' && colunas.length >= 5) {
                         // Formato completo: NOME,QUANTIDADE,VALOR,SUPERMERCADO,CATEGORIA
                         [nome, quantidade, valor, supermercado, categoria] = colunas;
-                    } else if (colunas.length === 4) {
+                    } else if (formato === 'sem_preco' && colunas.length >= 4) {
                         // Formato sem preço: NOME,QUANTIDADE,SUPERMERCADO,CATEGORIA
                         [nome, quantidade, supermercado, categoria] = colunas;
                         valor = '';
-                    } else if (colunas.length >= 3) {
-                        // Formato mínimo: NOME,QUANTIDADE,CATEGORIA
+                    } else {
+                        // Formato mínimo: NOME,QUANTIDADE,CATEGORIA (ou fallback)
                         [nome, quantidade, categoria] = colunas;
                         supermercado = '';
                         valor = '';
-                    } else {
-                        console.warn(`Linha ${index + 2} ignorada: número insuficiente de colunas`);
-                        erros++;
-                        return;
+                        
+                        // Se houver 4 colunas mas não detectamos formato, tentar interpretar
+                        if (colunas.length >= 4 && !categoria) {
+                            [nome, quantidade, supermercado, categoria] = colunas;
+                        }
                     }
                     
                     // Validar campos obrigatórios
                     if (!nome || !quantidade || !categoria) {
-                        console.warn(`Linha ${index + 2} ignorada: campos obrigatórios faltando`);
+                        console.warn(`Linha ${index + 2} ignorada: campos obrigatórios faltando`, {nome, quantidade, categoria});
                         erros++;
                         return;
                     }
                     
-                    // Validar e converter quantidade
-                    const qty = parseFloat(quantidade.replace(',', '.'));
+                    // Limpar e padronizar valores
+                    nome = nome.trim().toUpperCase().replace(/^["']|["']$/g, '');
+                    categoria = categoria.trim().toUpperCase().replace(/^["']|["']$/g, '');
+                    
+                    // Converter quantidade (aceita vírgula ou ponto)
+                    const qtyStr = quantidade.toString().trim().replace(/^["']|["']$/g, '').replace(',', '.');
+                    const qty = parseFloat(qtyStr);
+                    
                     if (isNaN(qty) || qty <= 0) {
-                        console.warn(`Linha ${index + 2} ignorada: quantidade inválida`);
+                        console.warn(`Linha ${index + 2}: quantidade inválida (${quantidade}), usando 1`);
                         erros++;
                         return;
                     }
                     
-                    // Validar e converter valor (se existir)
+                    // Processar valor (se existir)
                     let val = 0;
                     if (valor && valor.trim() !== '') {
-                        val = parseFloat(valor.toString().replace(',', '.'));
+                        const valorStr = valor.toString().trim().replace(/^["']|["']$/g, '').replace(',', '.');
+                        val = parseFloat(valorStr);
                         if (isNaN(val) || val < 0) {
-                            console.warn(`Linha ${index + 2}: valor inválido, definido como 0`);
+                            console.warn(`Linha ${index + 2}: valor inválido (${valor}), definido como 0`);
                             val = 0;
+                        } else {
+                            // Tem preço válido
                         }
                     } else {
-                        itensSemPreco++; // Contar como item sem preço
+                        itensSemPreco++;
                     }
                     
-                    // Validar supermercado (opcional)
-                    const supermercadoValido = supermercado && 
-                        (supermercado.toUpperCase() === 'COGEAL' || supermercado.toUpperCase() === 'SALES') 
-                        ? supermercado.toUpperCase() : '';
+                    // Processar supermercado (se existir)
+                    let supermercadoValido = '';
+                    if (supermercado && supermercado.trim() !== '') {
+                        const supermercadoStr = supermercado.trim().toUpperCase().replace(/^["']|["']$/g, '');
+                        if (supermercadoStr === 'COGEAL' || supermercadoStr === 'SALES') {
+                            supermercadoValido = supermercadoStr;
+                        }
+                    }
                     
-                    // Validar categoria
-                    let categoriaValida = categoria.toUpperCase().trim();
-                    if (!categorias.includes(categoriaValida)) {
-                        // Se categoria não existe, adicionar automaticamente
-                        categorias.push(categoriaValida);
+                    // Verificar se categoria existe, se não, adicionar
+                    if (!categorias.includes(categoria)) {
+                        categorias.push(categoria);
+                        novasCategorias++;
                     }
                     
                     // Criar item
                     const novoItem = {
                         id: Date.now() + Math.random().toString(36).substr(2, 9) + index,
-                        nome: nome.toUpperCase().trim(),
+                        nome: nome,
                         quantidade: qty,
                         valor: val,
                         supermercado: supermercadoValido,
-                        categoria: categoriaValida,
+                        categoria: categoria,
                         valorTotal: qty * val
                     };
                     
@@ -579,13 +672,17 @@ function processarImportacao(file) {
             renderItems();
             
             // Mostrar resultado detalhado
-            if (importados > 0) {
-                const mensagem = `✅ ${importados} ITENS IMPORTADOS! ` +
-                               `${itensSemPreco > 0 ? `(${itensSemPreco} sem preço)` : ''}` +
-                               `${erros > 0 ? ` | ${erros} erros` : ''}`;
-                showToast(mensagem);
-            } else {
-                showToast('❌ NENHUM ITEM IMPORTADO!');
+            let mensagem = `✅ ${importados} ITENS IMPORTADOS!`;
+            if (itensSemPreco > 0) mensagem += ` (${itensSemPreco} sem preço)`;
+            if (novasCategorias > 0) mensagem += ` | ${novasCategorias} novas categorias`;
+            if (erros > 0) mensagem += ` | ${erros} erros`;
+            
+            showToast(mensagem);
+            
+            // Mostrar banner de preços pendentes se houver itens sem preço
+            if (itensSemPreco > 0) {
+                const banner = document.getElementById('priceUpdateBanner');
+                if (banner) banner.style.display = 'flex';
             }
             
         } catch (err) {
@@ -594,6 +691,11 @@ function processarImportacao(file) {
         }
     };
     
+    reader.onerror = function() {
+        showToast('❌ ERRO AO LER ARQUIVO!');
+    };
+    
+    // Tentar ler como texto com codificação UTF-8
     reader.readAsText(file, 'UTF-8');
 }
 
@@ -654,107 +756,6 @@ function exportarListaCSV() {
     URL.revokeObjectURL(url);
     
     showToast('📤 LISTA EXPORTADA!');
-}
-
-// ========== PERSISTÊNCIA ==========
-function saveToLocalStorage() {
-    localStorage.setItem('shoppingItems', JSON.stringify(items));
-    localStorage.setItem('shoppingCategorias', JSON.stringify(categorias));
-}
-
-function loadFromLocalStorage() {
-    const savedItems = localStorage.getItem('shoppingItems');
-    const savedCategorias = localStorage.getItem('shoppingCategorias');
-    
-    if (savedItems) {
-        items = JSON.parse(savedItems);
-    }
-    
-    if (savedCategorias) {
-        categorias = JSON.parse(savedCategorias);
-    }
-}
-
-// ========== UTILITÁRIOS ==========
-function formatarMoeda(valor) {
-    return parseFloat(valor || 0).toFixed(2).replace('.', ',');
-}
-
-function showToast(mensagem) {
-    const toast = document.getElementById('toast');
-    toast.textContent = mensagem;
-    toast.classList.add('show');
-    setTimeout(() => {
-        toast.classList.remove('show');
-    }, 3000);
-}
-
-function checkOnlineStatus() {
-    const status = document.getElementById('onlineStatus');
-    if (navigator.onLine) {
-        status.textContent = '● ONLINE';
-        status.className = 'online-status online';
-    } else {
-        status.textContent = '● OFFLINE';
-        status.className = 'online-status offline';
-    }
-}
-
-// ========== PWA ==========
-function registerServiceWorker() {
-    if ('serviceWorker' in navigator) {
-        navigator.serviceWorker.register('service-worker.js')
-            .then(reg => console.log('Service Worker registrado!', reg))
-            .catch(err => console.log('Erro ao registrar Service Worker:', err));
-    }
-}
-
-function setupInstallPrompt() {
-    window.addEventListener('beforeinstallprompt', (e) => {
-        e.preventDefault();
-        deferredPrompt = e;
-        document.getElementById('installButton').style.display = 'block';
-    });
-    
-    document.getElementById('installButton').addEventListener('click', async () => {
-        if (!deferredPrompt) return;
-        
-        deferredPrompt.prompt();
-        const { outcome } = await deferredPrompt.userChoice;
-        
-        if (outcome === 'accepted') {
-            document.getElementById('installButton').style.display = 'none';
-        }
-        
-        deferredPrompt = null;
-    });
-    
-    window.addEventListener('appinstalled', () => {
-        document.getElementById('installButton').style.display = 'none';
-        showToast('APP INSTALADO COM SUCESSO!');
-    });
-}
-
-// ========== FUNÇÕES ADICIONAIS ==========
-
-/**
- * Atualizar preços em lote (útil após importação)
- */
-function atualizarPrecosEmLote() {
-    const itensSemPreco = items.filter(item => !item.valor || item.valor === 0);
-    
-    if (itensSemPreco.length === 0) {
-        showToast('TODOS OS ITENS JÁ TÊM PREÇO!');
-        return;
-    }
-    
-    if (confirm(`${itensSemPreco.length} ITENS SEM PREÇO. DESEJA EDITAR UM POR UM?`)) {
-        // Abrir o primeiro item sem preço para edição
-        const primeiroItem = itensSemPreco[0];
-        if (primeiroItem) {
-            openModal(primeiroItem.id);
-        }
-    }
 }
 
 // ========== FUNÇÕES DE ALTERAÇÃO EM LOTE ==========
@@ -861,7 +862,7 @@ function atualizarContadorLote() {
 }
 
 /**
- * Confirmar e executar alteração em lote
+ * Confirmar e executar alteração em lote do supermercado
  */
 function confirmarAlteracaoLote() {
     const novoSupermercado = document.getElementById('loteNovoSupermercado').value;
@@ -927,8 +928,6 @@ function fecharModalLote() {
         modal.remove();
     }
 }
-
-// ========== FUNÇÃO PARA ALTERAR CATEGORIA EM LOTE ==========
 
 /**
  * Abrir modal para alteração em lote da categoria
@@ -1078,6 +1077,7 @@ function confirmarAlteracaoLoteCategoria() {
     
     // Salvar e atualizar
     saveToLocalStorage();
+    renderCategorias();
     renderItems();
     fecharModalLoteCategoria();
     
@@ -1094,8 +1094,115 @@ function fecharModalLoteCategoria() {
     }
 }
 
+// ========== PERSISTÊNCIA ==========
+function saveToLocalStorage() {
+    localStorage.setItem('shoppingItems', JSON.stringify(items));
+    localStorage.setItem('shoppingCategorias', JSON.stringify(categorias));
+}
+
+function loadFromLocalStorage() {
+    const savedItems = localStorage.getItem('shoppingItems');
+    const savedCategorias = localStorage.getItem('shoppingCategorias');
+    
+    if (savedItems) {
+        items = JSON.parse(savedItems);
+    }
+    
+    if (savedCategorias) {
+        categorias = JSON.parse(savedCategorias);
+    }
+}
+
+// ========== UTILITÁRIOS ==========
+function formatarMoeda(valor) {
+    return parseFloat(valor || 0).toFixed(2).replace('.', ',');
+}
+
+function showToast(mensagem) {
+    const toast = document.getElementById('toast');
+    toast.textContent = mensagem;
+    toast.classList.add('show');
+    setTimeout(() => {
+        toast.classList.remove('show');
+    }, 3000);
+}
+
+function checkOnlineStatus() {
+    const status = document.getElementById('onlineStatus');
+    if (navigator.onLine) {
+        status.textContent = '● ONLINE';
+        status.className = 'online-status online';
+    } else {
+        status.textContent = '● OFFLINE';
+        status.className = 'online-status offline';
+    }
+}
+
+// ========== PWA ==========
+function registerServiceWorker() {
+    if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.register('service-worker.js')
+            .then(reg => console.log('Service Worker registrado!', reg))
+            .catch(err => console.log('Erro ao registrar Service Worker:', err));
+    }
+}
+
+function setupInstallPrompt() {
+    window.addEventListener('beforeinstallprompt', (e) => {
+        e.preventDefault();
+        deferredPrompt = e;
+        document.getElementById('installButton').style.display = 'block';
+    });
+    
+    document.getElementById('installButton').addEventListener('click', async () => {
+        if (!deferredPrompt) return;
+        
+        deferredPrompt.prompt();
+        const { outcome } = await deferredPrompt.userChoice;
+        
+        if (outcome === 'accepted') {
+            document.getElementById('installButton').style.display = 'none';
+        }
+        
+        deferredPrompt = null;
+    });
+    
+    window.addEventListener('appinstalled', () => {
+        document.getElementById('installButton').style.display = 'none';
+        showToast('APP INSTALADO COM SUCESSO!');
+    });
+}
+
+/**
+ * Atualizar preços em lote (útil após importação)
+ */
+function atualizarPrecosEmLote() {
+    const itensSemPreco = items.filter(item => !item.valor || item.valor === 0);
+    
+    if (itensSemPreco.length === 0) {
+        showToast('TODOS OS ITENS JÁ TÊM PREÇO!');
+        return;
+    }
+    
+    if (confirm(`${itensSemPreco.length} ITENS SEM PREÇO. DESEJA EDITAR UM POR UM?`)) {
+        // Abrir o primeiro item sem preço para edição
+        const primeiroItem = itensSemPreco[0];
+        if (primeiroItem) {
+            openModal(primeiroItem.id);
+        }
+    }
+}
+
 // Tornar funções globais para acesso pelo HTML
 window.openModal = openModal;
 window.closeModal = closeModal;
 window.deleteItem = deleteItem;
 window.atualizarPrecosEmLote = atualizarPrecosEmLote;
+window.abrirAlteracaoLoteSupermercado = abrirAlteracaoLoteSupermercado;
+window.abrirAlteracaoLoteCategoria = abrirAlteracaoLoteCategoria;
+window.fecharModalLote = fecharModalLote;
+window.fecharModalLoteCategoria = fecharModalLoteCategoria;
+window.confirmarAlteracaoLote = confirmarAlteracaoLote;
+window.confirmarAlteracaoLoteCategoria = confirmarAlteracaoLoteCategoria;
+window.atualizarContadorLote = atualizarContadorLote;
+window.atualizarContadorLoteCategoria = atualizarContadorLoteCategoria;
