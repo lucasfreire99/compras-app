@@ -1,111 +1,157 @@
-const categoriasPadrao = [
-  "Alimentos", "Bebidas", "Limpeza",
-  "Higiene", "Hortifruti", "Outros"
-];
+let items = [];
+let categories = ["Alimentos", "Bebidas", "Limpeza", "Higiene", "Hortifruti", "Outros"];
+let deferredPrompt = null;
 
-let itens = JSON.parse(localStorage.getItem("itens")) || [];
-let categorias = JSON.parse(localStorage.getItem("categorias")) || categoriasPadrao;
+const form = document.getElementById("itemForm");
+const itemList = document.getElementById("itemList");
+const grandTotalEl = document.getElementById("grandTotal");
+const itemCountEl = document.getElementById("itemCount");
+const categorySelect = document.getElementById("category");
+const filterCategory = document.getElementById("filterCategory");
+const installBtn = document.getElementById("installBtn");
+const toast = document.getElementById("toast");
 
-const lista = document.getElementById("lista");
-const totalGeralEl = document.getElementById("totalGeral");
-const contador = document.getElementById("contador");
-
-function formatarMoeda(valor) {
-  return valor.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
+function formatCurrency(value) {
+  return value.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 }
 
-function addItem() {
-  const nome = document.getElementById("nome").value.trim();
-  const quantidade = parseFloat(document.getElementById("quantidade").value);
-  const valor = parseFloat(document.getElementById("valor").value);
-  const categoria = document.getElementById("categoria").value;
-  const supermercado = document.getElementById("supermercadoGlobal").value;
+function initCategories() {
+  categorySelect.innerHTML = "";
+  filterCategory.innerHTML = '<option value="all">Filtrar por Categoria</option>';
 
-  if (!nome || quantidade <= 0 || valor <= 0) {
-    alert("Preencha os campos corretamente.");
-    return;
-  }
-
-  itens.push({ id: Date.now(), nome, quantidade, valor, categoria, supermercado });
-  saveToLocalStorage();
-  render();
-}
-
-function deleteItem(id) {
-  if (!confirm("Excluir item?")) return;
-  itens = itens.filter(item => item.id !== id);
-  saveToLocalStorage();
-  render();
+  categories.forEach(cat => {
+    categorySelect.innerHTML += `<option value="${cat}">${cat}</option>`;
+    filterCategory.innerHTML += `<option value="${cat}">${cat}</option>`;
+  });
 }
 
 function calculateGrandTotal() {
-  const total = itens.reduce((acc, item) => acc + item.quantidade * item.valor, 0);
-  totalGeralEl.textContent = formatarMoeda(total);
+  const total = items.reduce((sum, item) => sum + item.total, 0);
+  grandTotalEl.textContent = formatCurrency(total);
+  itemCountEl.textContent = items.length;
 }
 
-function render() {
-  lista.innerHTML = "";
-  const filtro = document.getElementById("filtroCategoria").value;
+function renderItems() {
+  itemList.innerHTML = "";
+  const filter = filterCategory.value;
 
-  let filtrados = filtro === "todas"
-    ? itens
-    : itens.filter(i => i.categoria === filtro);
+  items
+    .filter(item => filter === "all" || item.category === filter)
+    .forEach((item, index) => {
+      itemList.innerHTML += `
+        <tr>
+          <td>${item.name}</td>
+          <td>${item.category}</td>
+          <td>${item.quantity}</td>
+          <td>${formatCurrency(item.price)}</td>
+          <td><strong>${formatCurrency(item.total)}</strong></td>
+          <td>${item.market || "-"}</td>
+          <td>
+            <button class="actionBtn" onclick="editItem(${index})">Editar</button>
+            <button class="actionBtn" onclick="deleteItem(${index})">Excluir</button>
+          </td>
+        </tr>
+      `;
+    });
 
-  filtrados.forEach(item => {
-    const totalItem = item.quantidade * item.valor;
-
-    const div = document.createElement("div");
-    div.className = "item-card";
-    div.innerHTML = `
-      <div>
-        <strong>${item.nome}</strong><br>
-        ${item.quantidade}x — ${formatarMoeda(totalItem)}<br>
-        <small>${item.categoria}</small>
-      </div>
-      <button onclick="deleteItem(${item.id})">X</button>
-    `;
-    lista.appendChild(div);
-  });
-
-  contador.textContent = `Itens: ${filtrados.length}`;
   calculateGrandTotal();
+  saveToLocalStorage();
+}
+
+function addItem(e) {
+  e.preventDefault();
+
+  const name = document.getElementById("name").value.trim();
+  const quantity = parseFloat(document.getElementById("quantity").value);
+  const price = parseFloat(document.getElementById("price").value.replace(",", "."));
+  const market = document.getElementById("market").value.trim();
+  const category = categorySelect.value;
+
+  const total = quantity * price;
+
+  items.push({ name, quantity, price, total, market, category });
+
+  form.reset();
+  renderItems();
+}
+
+function editItem(index) {
+  const item = items[index];
+
+  document.getElementById("name").value = item.name;
+  document.getElementById("quantity").value = item.quantity;
+  document.getElementById("price").value = item.price;
+  document.getElementById("market").value = item.market;
+  categorySelect.value = item.category;
+
+  items.splice(index, 1);
+  renderItems();
+}
+
+function deleteItem(index) {
+  if (confirm("Deseja excluir este item?")) {
+    items.splice(index, 1);
+    renderItems();
+  }
 }
 
 function saveToLocalStorage() {
-  localStorage.setItem("itens", JSON.stringify(itens));
+  localStorage.setItem("items", JSON.stringify(items));
+}
+
+function loadFromLocalStorage() {
+  items = JSON.parse(localStorage.getItem("items")) || [];
 }
 
 function copyList() {
-  let supermercado = document.getElementById("supermercadoGlobal").value;
-  let texto = `Supermercado: ${supermercado || "Não informado"}\n`;
-
-  let total = 0;
-  itens.forEach(item => {
-    let subtotal = item.quantidade * item.valor;
-    total += subtotal;
-    texto += `${item.nome} (${item.quantidade}x) — ${formatarMoeda(subtotal)}\n`;
+  let text = "🛒 Lista de Compras\n\n";
+  items.forEach(item => {
+    text += `${item.name} - ${item.quantity}x ${formatCurrency(item.price)} = ${formatCurrency(item.total)}\n`;
   });
+  text += `\nTotal: ${grandTotalEl.textContent}`;
 
-  texto += `Total: ${formatarMoeda(total)}`;
-
-  navigator.clipboard.writeText(texto);
-  showToast("Lista copiada!");
+  navigator.clipboard.writeText(text);
+  showToast("Lista copiada com sucesso!");
 }
 
-function showToast(msg) {
-  const toast = document.getElementById("toast");
-  toast.textContent = msg;
+function showToast(message) {
+  toast.textContent = message;
   toast.classList.remove("hidden");
   setTimeout(() => toast.classList.add("hidden"), 2000);
 }
 
-function loadCategorias() {
-  const select = document.getElementById("categoria");
-  const filtro = document.getElementById("filtroCategoria");
+/* PWA */
+if ("serviceWorker" in navigator) {
+  navigator.serviceWorker.register("service-worker.js");
+}
 
-  select.innerHTML = "";
-  filtro.innerHTML = `<option value="todas">Todas Categorias</option>`;
+window.addEventListener("beforeinstallprompt", e => {
+  e.preventDefault();
+  deferredPrompt = e;
+  installBtn.classList.remove("hidden");
+});
 
+installBtn.addEventListener("click", () => {
+  deferredPrompt.prompt();
+  installBtn.classList.add("hidden");
+});
+
+/* ONLINE/OFFLINE */
+window.addEventListener("online", () =>
+  document.getElementById("offlineBadge").classList.add("hidden")
+);
+
+window.addEventListener("offline", () =>
+  document.getElementById("offlineBadge").classList.remove("hidden")
+);
+
+filterCategory.addEventListener("change", renderItems);
+document.getElementById("copyBtn").addEventListener("click", copyList);
+form.addEventListener("submit", addItem);
+
+loadFromLocalStorage();
+initCategories();
+renderItems();
   categorias.forEach(cat => {
     select.innerHTML += `<option value="${cat}">${cat}</option>`;
     filtro.innerHTML += `<option value="${cat}">${cat}</option>`;
