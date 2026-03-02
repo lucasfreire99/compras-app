@@ -31,12 +31,12 @@ https://lucasfreire99.github.io/compras-app/
 
 ## 📦 Estrutura do Projeto
 
-/index.html
-/style.css
-/script.js
-/manifest.json
-/service-worker.js
-/icons/
+- /index.html
+- /style.css
+- /script.js
+- /manifest.json
+- /service-worker.js
+- /icons/
 
 ---
 
