@@ -1,7 +1,7 @@
 {
     "name": "Lista de Compras",
     "short_name": "Compras",
-    "description": "Gerencie suas listas de compras de forma simples e eficiente",
+    "description": "App de lista de compras com categorias e cálculos",
     "start_url": ".",
     "display": "standalone",
     "background_color": "#121212",
