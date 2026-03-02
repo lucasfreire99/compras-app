@@ -1,9 +1,5 @@
-/* =========================
-   ESTADO GLOBAL
-========================= */
-
-let items = [];
-let deferredPrompt = null;
+let lists = {};
+let currentList = null;
 
 const categories = [
   "Alimentos",
@@ -14,24 +10,17 @@ const categories = [
   "Outros"
 ];
 
-/* =========================
-   ELEMENTOS DOM
-========================= */
-
 const form = document.getElementById("itemForm");
 const itemList = document.getElementById("itemList");
 const grandTotalEl = document.getElementById("grandTotal");
 const itemCountEl = document.getElementById("itemCount");
 const categorySelect = document.getElementById("category");
 const filterCategory = document.getElementById("filterCategory");
-const installBtn = document.getElementById("installBtn");
+const listsContainer = document.getElementById("listsContainer");
+const newListNameInput = document.getElementById("newListName");
+const createListBtn = document.getElementById("createListBtn");
 const toast = document.getElementById("toast");
-const copyBtn = document.getElementById("copyBtn");
-const offlineBadge = document.getElementById("offlineBadge");
-
-/* =========================
-   UTILITÁRIOS
-========================= */
+const currentListTitle = document.getElementById("currentListTitle");
 
 function formatCurrency(value) {
   return value.toLocaleString("pt-BR", {
@@ -46,13 +35,23 @@ function showToast(message) {
   setTimeout(() => toast.classList.add("hidden"), 2000);
 }
 
-/* =========================
-   CATEGORIAS
-========================= */
+function save() {
+  localStorage.setItem("lists", JSON.stringify(lists));
+  localStorage.setItem("currentList", currentList);
+}
+
+function load() {
+  lists = JSON.parse(localStorage.getItem("lists")) || {
+    "Lista Principal": []
+  };
+  currentList =
+    localStorage.getItem("currentList") ||
+    Object.keys(lists)[0];
+}
 
 function initCategories() {
   categorySelect.innerHTML = "";
-  filterCategory.innerHTML = '<option value="all">Filtrar por Categoria</option>';
+  filterCategory.innerHTML = '<option value="all">Filtrar</option>';
 
   categories.forEach(cat => {
     categorySelect.innerHTML += `<option value="${cat}">${cat}</option>`;
@@ -60,91 +59,146 @@ function initCategories() {
   });
 }
 
-/* =========================
-   STORAGE
-========================= */
+function renderLists() {
+  listsContainer.innerHTML = "";
 
-function saveToLocalStorage() {
-  localStorage.setItem("items", JSON.stringify(items));
+  Object.keys(lists).forEach(name => {
+    const li = document.createElement("li");
+    li.className = "listItem";
+
+    if (name === currentList) {
+      li.classList.add("activeList");
+    }
+
+    li.innerHTML = `
+      <span class="listName">${name}</span>
+      <span class="listCount">${lists[name].length}</span>
+      <div class="listActions">
+        <button onclick="renameList('${name}')">✏️</button>
+        <button onclick="deleteList('${name}')">🗑️</button>
+      </div>
+    `;
+
+    li.querySelector(".listName").onclick = () => {
+      currentList = name;
+      render();
+      save();
+    };
+
+    listsContainer.appendChild(li);
+  });
 }
 
-function loadFromLocalStorage() {
-  items = JSON.parse(localStorage.getItem("items")) || [];
+function createList() {
+  const name = newListNameInput.value.trim();
+
+  if (!name) return;
+
+  if (lists[name]) {
+    showToast("Lista já existe.");
+    return;
+  }
+
+  lists[name] = [];
+  currentList = name;
+  newListNameInput.value = "";
+
+  render();
+  save();
 }
 
-/* =========================
-   CÁLCULO TOTAL
-========================= */
+function renameList(oldName) {
+  const newName = prompt("Novo nome:", oldName);
+  if (!newName || lists[newName]) return;
 
-function calculateGrandTotal() {
-  const total = items.reduce((sum, item) => sum + item.total, 0);
-  grandTotalEl.textContent = formatCurrency(total);
-  itemCountEl.textContent = items.length;
+  lists[newName] = lists[oldName];
+  delete lists[oldName];
+
+  if (currentList === oldName) {
+    currentList = newName;
+  }
+
+  render();
+  save();
 }
 
-/* =========================
-   RENDERIZAÇÃO
-========================= */
+function deleteList(name) {
+  if (Object.keys(lists).length === 1) {
+    showToast("Precisa ter ao menos uma lista.");
+    return;
+  }
+
+  if (!confirm("Excluir lista?")) return;
+
+  delete lists[name];
+
+  if (currentList === name) {
+    currentList = Object.keys(lists)[0];
+  }
+
+  render();
+  save();
+}
 
 function renderItems() {
   itemList.innerHTML = "";
   const filter = filterCategory.value;
+  const items = lists[currentList];
 
-  const filteredItems = items.filter(
+  const filtered = items.filter(
     item => filter === "all" || item.category === filter
   );
 
-  filteredItems.forEach((item, index) => {
+  filtered.forEach((item, index) => {
     itemList.innerHTML += `
       <tr>
         <td>${item.name}</td>
         <td>${item.category}</td>
         <td>${item.quantity}</td>
         <td>${formatCurrency(item.price)}</td>
-        <td><strong>${formatCurrency(item.total)}</strong></td>
+        <td>${formatCurrency(item.total)}</td>
         <td>${item.market || "-"}</td>
         <td>
-          <button class="actionBtn" onclick="editItem(${index})">Editar</button>
-          <button class="actionBtn" onclick="deleteItem(${index})">Excluir</button>
+          <button onclick="editItem(${index})">Editar</button>
+          <button onclick="deleteItemFromList(${index})">Excluir</button>
         </td>
       </tr>
     `;
   });
 
-  calculateGrandTotal();
-  saveToLocalStorage();
+  calculateTotal();
 }
 
-/* =========================
-   CRUD
-========================= */
+function calculateTotal() {
+  const items = lists[currentList];
+  const total = items.reduce((sum, item) => sum + item.total, 0);
+
+  grandTotalEl.textContent = formatCurrency(total);
+  itemCountEl.textContent = items.length;
+}
 
 function addItem(e) {
   e.preventDefault();
 
   const name = document.getElementById("name").value.trim();
   const quantity = parseFloat(document.getElementById("quantity").value);
-  const price = parseFloat(
-    document.getElementById("price").value.replace(",", ".")
-  );
+  const price = parseFloat(document.getElementById("price").value);
   const market = document.getElementById("market").value.trim();
   const category = categorySelect.value;
 
-  if (!name || !quantity || !price) {
-    showToast("Preencha todos os campos obrigatórios.");
-    return;
-  }
-
   const total = quantity * price;
 
-  items.push({ name, quantity, price, total, market, category });
+  lists[currentList].push({
+    name, quantity, price, total, market, category
+  });
 
   form.reset();
-  renderItems();
+  render();
+  save();
 }
 
 function editItem(index) {
-  const item = items[index];
+  const item = lists[currentList][index];
 
   document.getElementById("name").value = item.name;
   document.getElementById("quantity").value = item.quantity;
@@ -152,84 +206,27 @@ function editItem(index) {
   document.getElementById("market").value = item.market;
   categorySelect.value = item.category;
 
-  items.splice(index, 1);
+  lists[currentList].splice(index, 1);
+  render();
+  save();
+}
+
+function deleteItemFromList(index) {
+  lists[currentList].splice(index, 1);
+  render();
+  save();
+}
+
+function render() {
+  currentListTitle.textContent = currentList;
+  renderLists();
   renderItems();
 }
 
-function deleteItem(index) {
-  if (confirm("Deseja excluir este item?")) {
-    items.splice(index, 1);
-    renderItems();
-  }
-}
-
-/* =========================
-   COPIAR LISTA
-========================= */
-
-function copyList() {
-  if (items.length === 0) {
-    showToast("Lista vazia.");
-    return;
-  }
-
-  let text = "🛒 Lista de Compras\n\n";
-
-  items.forEach(item => {
-    text += `${item.name} - ${item.quantity}x ${formatCurrency(item.price)} = ${formatCurrency(item.total)}\n`;
-  });
-
-  text += `\nTotal: ${grandTotalEl.textContent}`;
-
-  navigator.clipboard.writeText(text);
-  showToast("Lista copiada com sucesso!");
-}
-
-/* =========================
-   PWA
-========================= */
-
-if ("serviceWorker" in navigator) {
-  navigator.serviceWorker.register("service-worker.js");
-}
-
-window.addEventListener("beforeinstallprompt", e => {
-  e.preventDefault();
-  deferredPrompt = e;
-  installBtn.classList.remove("hidden");
-});
-
-installBtn?.addEventListener("click", () => {
-  if (deferredPrompt) {
-    deferredPrompt.prompt();
-    installBtn.classList.add("hidden");
-  }
-});
-
-/* =========================
-   STATUS ONLINE/OFFLINE
-========================= */
-
-window.addEventListener("online", () =>
-  offlineBadge.classList.add("hidden")
-);
-
-window.addEventListener("offline", () =>
-  offlineBadge.classList.remove("hidden")
-);
-
-/* =========================
-   EVENT LISTENERS
-========================= */
-
-filterCategory.addEventListener("change", renderItems);
 form.addEventListener("submit", addItem);
-copyBtn?.addEventListener("click", copyList);
+createListBtn.addEventListener("click", createList);
+filterCategory.addEventListener("change", renderItems);
 
-/* =========================
-   INICIALIZAÇÃO
-========================= */
-
-loadFromLocalStorage();
+load();
 initCategories();
-renderItems();
+render();
