@@ -1,12 +1,11 @@
-let lists = JSON.parse(localStorage.getItem("lists")) || { "Lista Padrão": [] };
+let lists = JSON.parse(localStorage.getItem("lists")) || {
+  "Padrão": []
+};
+
 let currentList = Object.keys(lists)[0];
 
-function save() {
+function saveLists() {
   localStorage.setItem("lists", JSON.stringify(lists));
-}
-
-function toggleSidebar() {
-  document.getElementById("sidebar").classList.toggle("active");
 }
 
 function renderLists() {
@@ -14,31 +13,24 @@ function renderLists() {
   container.innerHTML = "";
 
   Object.keys(lists).forEach(name => {
+    const count = lists[name].length;
     const btn = document.createElement("button");
-    btn.textContent = `${name} (${lists[name].length})`;
+    btn.className = "btn-secondary";
+    btn.style.marginBottom = "5px";
+    btn.innerText = `${name} (${count})`;
     btn.onclick = () => {
       currentList = name;
-      render();
+      renderItems();
+      document.getElementById("currentListTitle").innerText = name;
     };
     container.appendChild(btn);
   });
-
-  document.getElementById("currentListTitle").textContent = currentList;
-}
-
-function createNewList() {
-  const name = prompt("Nome da nova lista:");
-  if (!name) return;
-  lists[name] = [];
-  currentList = name;
-  save();
-  render();
 }
 
 function addItem() {
-  const name = itemName.value;
-  const qty = Number(itemQty.value);
-  const price = Number(itemPrice.value);
+  const name = document.getElementById("itemName").value;
+  const qty = Number(document.getElementById("itemQty").value);
+  const price = Number(document.getElementById("itemPrice").value);
 
   if (!name || !qty || !price) return;
 
@@ -50,81 +42,72 @@ function addItem() {
     purchased: false
   });
 
-  itemName.value = "";
-  itemQty.value = "";
-  itemPrice.value = "";
+  saveLists();
+  renderItems();
+}
 
-  save();
-  render();
+function renderItems() {
+  const container = document.getElementById("itemsContainer");
+  container.innerHTML = "";
+
+  let totalGeral = 0;
+
+  lists[currentList].forEach((item, index) => {
+    totalGeral += item.total;
+
+    const row = document.createElement("tr");
+
+    row.innerHTML = `
+      <td>
+        <button onclick="togglePurchased(${index})">
+          ${item.purchased ? "✔" : "○"}
+        </button>
+      </td>
+      <td>${item.name}</td>
+      <td>${item.quantity}</td>
+      <td>R$ ${item.price.toFixed(2)}</td>
+      <td>R$ ${item.total.toFixed(2)}</td>
+      <td>
+        <button class="btn-danger" onclick="removeItem(${index})">Excluir</button>
+      </td>
+    `;
+
+    if (item.purchased) {
+      row.style.textDecoration = "line-through";
+      row.style.opacity = "0.6";
+    }
+
+    container.appendChild(row);
+  });
+
+  document.getElementById("totalValue").innerText =
+    "R$ " + totalGeral.toFixed(2);
+
+  renderLists();
 }
 
 function togglePurchased(index) {
   lists[currentList][index].purchased =
     !lists[currentList][index].purchased;
-  save();
-  render();
+  saveLists();
+  renderItems();
 }
 
-function render() {
+function removeItem(index) {
+  lists[currentList].splice(index, 1);
+  saveLists();
+  renderItems();
+}
+
+function createNewList() {
+  const name = prompt("Nome da nova lista:");
+  if (!name) return;
+  lists[name] = [];
+  currentList = name;
+  saveLists();
   renderLists();
-
-  const container = document.getElementById("itemsContainer");
-  container.innerHTML = "";
-
-  let total = 0;
-
-  lists[currentList].forEach((item, i) => {
-    total += item.total;
-
-    const div = document.createElement("div");
-    div.className = "item-card";
-    if (item.purchased) div.classList.add("purchased");
-
-    div.innerHTML = `
-      <div>
-        <strong>${item.name}</strong><br>
-        ${item.quantity}x - R$ ${item.total.toFixed(2)}
-      </div>
-      <button onclick="togglePurchased(${i})">
-        ${item.purchased ? "✔" : "○"}
-      </button>
-    `;
-
-    container.appendChild(div);
-  });
-
-  document.getElementById("totalValue").textContent =
-    "R$ " + total.toFixed(2);
+  renderItems();
 }
 
-function toggleCopyMenu() {
-  document.getElementById("copyMenu").classList.toggle("hidden");
-}
-
-function copyTxt() {
-  let text = `LISTA: ${currentList}\n\n`;
-
-  lists[currentList].forEach(item => {
-    text += `${item.name} - ${item.quantity}x - R$ ${item.total.toFixed(2)}\n`;
-  });
-
-  navigator.clipboard.writeText(text);
-}
-
-function copyWhatsApp() {
-  let text = `🛒 *${currentList}*\n\n`;
-
-  lists[currentList].forEach(item => {
-    text += `• ${item.name} - ${item.quantity}x - R$ ${item.total.toFixed(2)}\n`;
-  });
-
-  navigator.clipboard.writeText(text);
-}
-
-render();
-
-if ("serviceWorker" in navigator) {
-  window.addEventListener("load", () => {
-    navigator.serviceWorker.register("./service-worker.js");
-  });
-}
+renderLists();
+renderItems();
