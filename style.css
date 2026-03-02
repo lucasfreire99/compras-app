@@ -2,85 +2,80 @@
   margin: 0;
   padding: 0;
   box-sizing: border-box;
-  font-family: Segoe UI, Roboto, sans-serif;
+  font-family: "Segoe UI", Arial, sans-serif;
 }
 
 body {
-  background: #f1f5f9;
+  background: #f3f6f9;
 }
 
-.layout {
+/* TOPBAR */
+.topbar {
+  height: 50px;
+  background: #0a6ed1;
+  color: white;
   display: flex;
-  height: 100vh;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 20px;
+  font-size: 14px;
+}
+
+.system-name {
+  font-weight: 600;
+  letter-spacing: 0.5px;
+}
+
+/* LAYOUT */
+.body-container {
+  display: flex;
+  height: calc(100vh - 50px);
 }
 
 /* SIDEBAR */
 .sidebar {
-  width: 260px;
-  background: #1e293b;
-  color: white;
-  padding: 20px;
+  width: 240px;
+  background: #ffffff;
+  border-right: 1px solid #d1d9e6;
+  padding: 15px;
   display: flex;
   flex-direction: column;
 }
 
-.logo h2 {
-  font-size: 20px;
-}
-
-.logo span {
+.menu-title {
   font-size: 12px;
-  opacity: 0.6;
-}
-
-.sidebar-section {
-  margin-top: 30px;
-}
-
-.sidebar-section h4 {
-  font-size: 12px;
+  font-weight: 600;
+  color: #6a6d70;
   margin-bottom: 10px;
-  opacity: 0.7;
 }
 
 .sidebar button {
-  width: 100%;
-  margin-top: 10px;
+  margin-bottom: 5px;
 }
 
 /* MAIN */
-.main {
+.main-content {
   flex: 1;
-  display: flex;
-  flex-direction: column;
-}
-
-/* HEADER */
-.header {
-  background: white;
-  padding: 20px;
-  display: flex;
-  justify-content: space-between;
-  border-bottom: 1px solid #e2e8f0;
-}
-
-.header h1 {
-  font-size: 20px;
-  font-weight: 600;
-}
-
-/* CONTENT */
-.content {
   padding: 20px;
   overflow-y: auto;
 }
 
+.page-header {
+  margin-bottom: 15px;
+}
+
+.page-header h2 {
+  font-size: 18px;
+  font-weight: 600;
+  color: #32363a;
+}
+
+/* CARDS */
 .card {
   background: white;
-  padding: 20px;
-  border-radius: 6px;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.05);
-  margin-bottom: 20px;
+  border: 1px solid #d1d9e6;
+  padding: 15px;
+  margin-bottom: 15px;
 }
 
 /* FORM */
@@ -90,103 +85,92 @@ body {
 }
 
 .form-card input {
-  padding: 8px;
-  border: 1px solid #cbd5e1;
-  border-radius: 4px;
+  padding: 6px;
+  border: 1px solid #c4cbd6;
+  font-size: 13px;
 }
 
 /* TABLE */
 table {
   width: 100%;
   border-collapse: collapse;
+  font-size: 13px;
 }
 
 thead {
-  background: #f8fafc;
+  background: #f5f7fa;
 }
 
 th, td {
-  padding: 10px;
-  border-bottom: 1px solid #e2e8f0;
+  border-bottom: 1px solid #e0e5ec;
+  padding: 8px;
   text-align: left;
-  font-size: 14px;
 }
 
 tbody tr:hover {
-  background: #f1f5f9;
+  background: #eef4fb;
 }
 
 /* BUTTONS */
 .btn-primary {
-  background: #2563eb;
-  color: white;
-  border: none;
-  padding: 8px 12px;
-  border-radius: 4px;
-  cursor: pointer;
-}
-
-.btn-secondary {
-  background: #e2e8f0;
-  border: none;
-  padding: 8px 12px;
-  border-radius: 4px;
-  cursor: pointer;
-}
-
-.btn-danger {
-  background: #dc2626;
+  background: #0a6ed1;
   color: white;
   border: none;
   padding: 6px 10px;
-  border-radius: 4px;
+  font-size: 12px;
   cursor: pointer;
 }
 
+.btn-light {
+  background: white;
+  border: 1px solid #d1d9e6;
+  padding: 5px 10px;
+  cursor: pointer;
+}
+
+.full {
+  width: 100%;
+}
+
 /* STATUS */
-.status-done {
-  color: #16a34a;
+.done {
+  color: #107e3e;
   font-weight: bold;
 }
 
-.status-pending {
-  color: #dc2626;
+.pending {
+  color: #bb0000;
 }
 
 /* TOTAL */
-.total-box {
+.footer-total {
   text-align: right;
-  font-size: 18px;
+  font-size: 14px;
+  margin-top: 10px;
 }
 
 /* DROPDOWN */
-.copy-dropdown {
-  position: relative;
-}
-
-.copy-menu {
+.dropdown {
   position: absolute;
-  right: 0;
-  top: 40px;
+  right: 20px;
+  top: 50px;
   background: white;
-  border: 1px solid #e2e8f0;
-  border-radius: 6px;
-  box-shadow: 0 5px 20px rgba(0,0,0,0.1);
-  width: 180px;
+  border: 1px solid #d1d9e6;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
   display: flex;
   flex-direction: column;
 }
 
-.copy-menu button {
-  background: none;
+.dropdown button {
+  padding: 8px;
   border: none;
-  padding: 10px;
+  background: none;
   text-align: left;
   cursor: pointer;
 }
 
-.copy-menu button:hover {
-  background: #f1f5f9;
+.dropdown button:hover {
+  background: #eef4fb;
 }
 
 .hidden {
